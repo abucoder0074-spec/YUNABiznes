@@ -1,0 +1,35 @@
+"""Database-backed business enumerations."""
+
+from enum import StrEnum
+
+
+class DocumentStatus(StrEnum):
+    DRAFT = "DRAFT"
+    POSTED = "POSTED"
+    VOID = "VOID"
+
+
+class PaymentMethod(StrEnum):
+    CASH = "CASH"
+    BANK_TRANSFER = "BANK_TRANSFER"
+    CARD = "CARD"
+    OTHER = "OTHER"
+
+
+class InventoryTransactionType(StrEnum):
+    PURCHASE_IN = "PURCHASE_IN"
+    PRODUCTION_OUT = "PRODUCTION_OUT"
+    SUPPLIER_RETURN_OUT = "SUPPLIER_RETURN_OUT"
+    PURCHASE_RETURN_IN = "PURCHASE_RETURN_IN"
+    ADJUSTMENT_IN = "ADJUSTMENT_IN"
+    ADJUSTMENT_OUT = "ADJUSTMENT_OUT"
+    TRANSFER_OUT = "TRANSFER_OUT"
+    TRANSFER_IN = "TRANSFER_IN"
+
+
+class SupplierLedgerEntryType(StrEnum):
+    PURCHASE_DEBIT = "PURCHASE_DEBIT"
+    PAYMENT_CREDIT = "PAYMENT_CREDIT"
+    RETURN_CREDIT = "RETURN_CREDIT"
+    ADJUSTMENT_DEBIT = "ADJUSTMENT_DEBIT"
+    ADJUSTMENT_CREDIT = "ADJUSTMENT_CREDIT"

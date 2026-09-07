@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# Environment and tooling
+.env
+.env.*
+!.env.example
+.idea/
+.vscode/
+
+# Database and generated files
+*.sqlite3
+*.db
+*.log
+backend/alembic/versions/__pycache__/

@@ -1,0 +1,1 @@
+"""Transaction-safe domain workflows."""
