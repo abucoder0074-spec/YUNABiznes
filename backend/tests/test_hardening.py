@@ -105,8 +105,7 @@ async def test_cross_supplier_allocation_rejected(db_session: AsyncSession) -> N
             await post_payment(db_session, payment_id=payment.id)
 
 
-async def test_posted_purchase_is_mutable_demonstrates_risk(db_session: AsyncSession) -> None:
-    """Demonstrate that posted documents are currently mutable (risk)."""
+async def test_posted_purchase_mutation_is_rejected(db_session: AsyncSession) -> None:
     unit, product, warehouse = await create_catalog(db_session)
     supplier = Supplier(name="Smut")
     db_session.add(supplier)
@@ -123,7 +122,5 @@ async def test_posted_purchase_is_mutable_demonstrates_risk(db_session: AsyncSes
     db_session.add(new_supplier)
     await db_session.flush()
     purchase.supplier_id = new_supplier.id
-    await db_session.flush()
-
-    await db_session.refresh(purchase)
-    assert purchase.supplier_id == new_supplier.id
+    with pytest.raises(ValueError, match="Posted documents are immutable"):
+        await db_session.flush()

@@ -73,9 +73,17 @@ class Purchase(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     @property
     def paid_amount(self) -> Decimal:
-        """Calculate direct allocations; unallocated supplier credits remain general balance."""
+        """Calculate allocations from posted payments only."""
 
-        return sum((allocation.amount for allocation in self.allocations), Decimal("0"))
+        return sum(
+            (
+                allocation.amount
+                for allocation in self.allocations
+                if allocation.payment is not None
+                and allocation.payment.status is DocumentStatus.POSTED
+            ),
+            Decimal("0"),
+        )
 
     @property
     def outstanding_amount(self) -> Decimal:
@@ -174,7 +182,7 @@ class PaymentAllocation(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     amount: Mapped[Decimal] = mapped_column(MONEY)
     notes: Mapped[str | None] = mapped_column(Text)
 
-    payment: Mapped[Payment] = relationship(back_populates="allocations")
+    payment: Mapped[Payment] = relationship(back_populates="allocations", lazy="joined")
     purchase: Mapped[Purchase | None] = relationship(back_populates="allocations")
 
 
