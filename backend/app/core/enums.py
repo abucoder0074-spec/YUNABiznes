@@ -17,6 +17,7 @@ class PaymentMethod(StrEnum):
 
 
 class InventoryTransactionType(StrEnum):
+    OPENING_BALANCE = "OPENING_BALANCE"
     PURCHASE_IN = "PURCHASE_IN"
     PRODUCTION_OUT = "PRODUCTION_OUT"
     SUPPLIER_RETURN_OUT = "SUPPLIER_RETURN_OUT"

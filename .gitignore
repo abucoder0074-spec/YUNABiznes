@@ -20,4 +20,5 @@ venv/
 *.sqlite3
 *.db
 *.log
+logs/*.pid
 backend/alembic/versions/__pycache__/

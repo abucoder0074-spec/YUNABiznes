@@ -17,7 +17,7 @@ from app.repositories.purchasing import (
     purchase_financials,
     purchase_item_returned_quantity,
 )
-from app.services.validation import validate_product_units
+from app.services.validation import validate_active_supplier_warehouse, validate_product_units
 
 
 class DocumentPostingError(ValueError):
@@ -73,8 +73,11 @@ async def post_purchase(session: AsyncSession, *, purchase_id: UUID) -> Purchase
         raise DocumentPostingError("Purchase not found.")
     if purchase.status is not DocumentStatus.DRAFT:
         raise DocumentPostingError("Only draft purchases can be posted.")
+    await validate_active_supplier_warehouse(
+        session, supplier_id=purchase.supplier_id, warehouse_id=purchase.warehouse_id
+    )
     await _assert_no_ledger_event(
-        session, source_document_type="purchase", source_document_id=purchase.id
+        session, source_document_type="PURCHASE", source_document_id=purchase.id
     )
     items = (
         await session.execute(
@@ -83,6 +86,14 @@ async def post_purchase(session: AsyncSession, *, purchase_id: UUID) -> Purchase
     ).scalars().all()
     if not items:
         raise DocumentPostingError("A purchase requires at least one item.")
+    product_ids = [item.product_id for item in items]
+    if len(set(product_ids)) != len(product_ids):
+        raise DocumentPostingError("A purchase cannot contain duplicate product lines.")
+    for item in items:
+        if item.quantity <= 0:
+            raise DocumentPostingError("Purchase quantities must be greater than zero.")
+        if item.unit_price < 0:
+            raise DocumentPostingError("Purchase unit prices cannot be negative.")
 
     await validate_product_units(session, ((item.product_id, item.unit_id) for item in items))
     positions = {(item.product_id, item.unit_id) for item in items}
@@ -101,7 +112,7 @@ async def post_purchase(session: AsyncSession, *, purchase_id: UUID) -> Purchase
                 warehouse_id=purchase.warehouse_id,
                 quantity=item.quantity,
                 occurred_at=posted_at,
-                source_document_type="purchase",
+                source_document_type="PURCHASE",
                 source_document_id=purchase.id,
                 performed_by_user_id=purchase.created_by_user_id,
                 note=item.notes,
@@ -126,7 +137,7 @@ async def post_purchase(session: AsyncSession, *, purchase_id: UUID) -> Purchase
                 currency=purchase.currency,
                 occurred_at=posted_at,
                 purchase_id=purchase.id,
-                source_document_type="purchase",
+                source_document_type="PURCHASE",
                 source_document_id=purchase.id,
                 created_by_user_id=purchase.created_by_user_id,
             )
@@ -154,6 +165,7 @@ async def post_payment(session: AsyncSession, *, payment_id: UUID) -> Payment:
         raise DocumentPostingError("Payment not found.")
     if payment.status is not DocumentStatus.DRAFT:
         raise DocumentPostingError("Only draft payments can be posted.")
+    await validate_active_supplier_warehouse(session, supplier_id=payment.supplier_id)
     await _assert_no_ledger_event(session, source_document_type="payment", source_document_id=payment.id)
     allocations = (
         await session.execute(
@@ -197,6 +209,7 @@ async def post_payment(session: AsyncSession, *, payment_id: UUID) -> Payment:
     )
     await session.flush()
     payment.status = DocumentStatus.POSTED
+    payment.posted_at = posted_at
     session.add(
         AuditLog(
             actor_user_id=payment.created_by_user_id,
@@ -223,6 +236,9 @@ async def post_supplier_return(session: AsyncSession, *, return_id: UUID) -> Ret
         raise SupplierReturnError("Supplier return not found.")
     if return_document.status is not DocumentStatus.DRAFT:
         raise SupplierReturnError("Only draft supplier returns can be posted.")
+    await validate_active_supplier_warehouse(
+        session, supplier_id=return_document.supplier_id, warehouse_id=return_document.warehouse_id
+    )
     await _assert_no_ledger_event(
         session, source_document_type="supplier_return", source_document_id=return_document.id
     )
@@ -241,6 +257,8 @@ async def post_supplier_return(session: AsyncSession, *, return_id: UUID) -> Ret
             select(PurchaseItem, Purchase)
             .join(Purchase, Purchase.id == PurchaseItem.purchase_id)
             .where(PurchaseItem.id.in_(source_item_ids))
+            .order_by(PurchaseItem.id)
+            .with_for_update()
         )
     ).all() if source_item_ids else []
     sources = {purchase_item.id: (purchase_item, purchase) for purchase_item, purchase in source_rows}
@@ -251,7 +269,7 @@ async def post_supplier_return(session: AsyncSession, *, return_id: UUID) -> Ret
     requested_returns: dict[UUID, Decimal] = defaultdict(lambda: Decimal("0"))
     for item in items:
         if item.purchase_item_id is None:
-            continue
+            raise SupplierReturnError("Every supplier return item must reference its purchase item.")
         purchase_item, purchase = sources[item.purchase_item_id]
         if purchase.status is not DocumentStatus.POSTED:
             raise SupplierReturnError("Supplier returns must reference posted purchases.")
@@ -259,6 +277,10 @@ async def post_supplier_return(session: AsyncSession, *, return_id: UUID) -> Ret
             raise SupplierReturnError("A return item must belong to the selected supplier.")
         if purchase_item.product_id != item.product_id or purchase_item.unit_id != item.unit_id:
             raise SupplierReturnError("A return item must match its original purchased product and unit.")
+        if purchase.warehouse_id != return_document.warehouse_id:
+            raise SupplierReturnError("A return must use the original purchase warehouse.")
+        if item.unit_price != purchase_item.unit_price:
+            raise SupplierReturnError("A return item price must match its original purchase price.")
         requested_returns[purchase_item.id] += item.quantity
 
     for purchase_item_id, requested_quantity in requested_returns.items():
