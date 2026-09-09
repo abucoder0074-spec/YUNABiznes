@@ -38,6 +38,8 @@ class Product(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __table_args__ = (
         CheckConstraint("minimum_stock IS NULL OR minimum_stock >= 0", name="ck_products_minimum_stock"),
         CheckConstraint("safety_stock IS NULL OR safety_stock >= 0", name="ck_products_safety_stock"),
+        CheckConstraint("target_stock IS NULL OR target_stock >= 0", name="ck_products_target_stock"),
+        CheckConstraint("lead_time_days IS NULL OR lead_time_days >= 0", name="ck_products_lead_time"),
     )
 
     name: Mapped[str] = mapped_column(String(255), index=True)
@@ -46,6 +48,8 @@ class Product(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
     minimum_stock: Mapped[Decimal | None] = mapped_column(QUANTITY)
     safety_stock: Mapped[Decimal | None] = mapped_column(QUANTITY)
+    target_stock: Mapped[Decimal | None] = mapped_column(QUANTITY)
+    lead_time_days: Mapped[Decimal | None] = mapped_column(QUANTITY)
     notes: Mapped[str | None] = mapped_column(Text)
 
     unit: Mapped[Unit] = relationship(back_populates="products")

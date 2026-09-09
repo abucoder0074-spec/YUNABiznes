@@ -16,7 +16,6 @@ class ReturnItemCreate(BaseModel):
     product_id: UUID
     unit_id: UUID
     quantity: Decimal = Field(gt=0)
-    unit_price: Decimal = Field(ge=0)
     notes: str | None = None
 
 

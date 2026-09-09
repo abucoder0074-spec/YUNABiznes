@@ -11,6 +11,7 @@ from app.core.enums import InventoryTransactionType
 from app.models.inventory import InventoryTransaction
 
 INBOUND_TRANSACTION_TYPES = (
+    InventoryTransactionType.OPENING_BALANCE,
     InventoryTransactionType.PURCHASE_IN,
     InventoryTransactionType.PURCHASE_RETURN_IN,
     InventoryTransactionType.ADJUSTMENT_IN,

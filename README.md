@@ -65,6 +65,29 @@ backend/
 
    `GET http://127.0.0.1:8000/health` returns the running environment without exposing secrets.
 
+## QUICK START — WINDOWS
+
+Install and configure PostgreSQL once, then configure the root `.env` once. After that,
+double-click `start.bat` from the repository root. The startup script verifies the
+`.venv`, PostgreSQL on `localhost:5432`, the `.env` file, and `DATABASE_URL`, checks
+database connectivity, runs `alembic upgrade head`, starts the backend, and starts a
+frontend automatically if a `frontend\package.json` exists.
+
+```powershell
+Copy-Item .env.example .env
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
+```
+
+Set the real PostgreSQL password in `.env` without committing it. Then use:
+
+- `start.bat` — start YUNABiznes and open the backend docs (or frontend).
+- `stop.bat` — stop only the YUNABiznes processes recorded by the startup script.
+- `restart.bat` — stop and start YUNABiznes again.
+
+Logs are written to `logs\backend.log`, `logs\backend.error.log`, and
+`logs\startup.log`. Passwords are not printed by the scripts.
+
 ## Environment variables
 
 | Variable | Purpose |

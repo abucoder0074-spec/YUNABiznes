@@ -11,6 +11,7 @@ from app.models.inventory import (
     ProductionIssueItem,
     Return,
     ReturnItem,
+    StockAdjustment,
 )
 from app.models.purchasing import (
     Payment,
@@ -43,7 +44,7 @@ for _event_target in (InventoryTransaction, SupplierLedger, AuditLog):
     event.listen(_event_target, "before_update", _reject_mutation)
     event.listen(_event_target, "before_delete", _reject_mutation)
 
-for _event_target in (Purchase, Payment, Return, ProductionIssue):
+for _event_target in (Purchase, Payment, Return, ProductionIssue, StockAdjustment):
     event.listen(_event_target, "before_update", _reject_posted_update)
     event.listen(_event_target, "before_delete", _reject_posted_delete)
 

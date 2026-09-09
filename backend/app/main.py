@@ -11,6 +11,7 @@ from app.api.errors import catalog_error_handler, integrity_error_handler, valid
 from app.api.router import api_router
 from app.core.config import get_settings
 from app.db.session import database
+from app.services.adjustments import StockAdjustmentError
 from app.services.catalogs import CatalogError
 from app.services.payments import PaymentError
 from app.services.production import ProductionIssueError
@@ -35,6 +36,7 @@ app.add_exception_handler(PurchaseError, catalog_error_handler)
 app.add_exception_handler(PaymentError, catalog_error_handler)
 app.add_exception_handler(ReturnError, catalog_error_handler)
 app.add_exception_handler(ProductionIssueError, catalog_error_handler)
+app.add_exception_handler(StockAdjustmentError, catalog_error_handler)
 app.add_exception_handler(IntegrityError, integrity_error_handler)
 app.add_exception_handler(RequestValidationError, validation_error_handler)
 app.include_router(api_router)

@@ -111,7 +111,8 @@ async def _validate_items(
             raise ReturnError("A return item must match its original purchased product.")
         if source_item.unit_id != item["unit_id"]:
             raise ReturnError("A return item must match its original purchased unit.")
-        if item["unit_price"] != source_item.unit_price:
+        client_price = item.get("unit_price")
+        if client_price is not None and client_price != source_item.unit_price:
             raise ReturnError("A return item price must match its original purchase price.")
         returned = await purchase_item_returned_quantity(session, source_item.id)
         if returned + item["quantity"] > source_item.quantity:

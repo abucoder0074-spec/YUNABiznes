@@ -36,6 +36,8 @@ class ProductCreate(CatalogBase):
     unit_id: UUID
     minimum_stock: Decimal | None = Field(default=None, ge=0)
     safety_stock: Decimal | None = Field(default=None, ge=0)
+    target_stock: Decimal | None = Field(default=None, ge=0)
+    lead_time_days: Decimal | None = Field(default=None, ge=0)
     notes: str | None = None
 
 
@@ -45,6 +47,8 @@ class ProductUpdate(CatalogBase):
     unit_id: UUID | None = None
     minimum_stock: Decimal | None = Field(default=None, ge=0)
     safety_stock: Decimal | None = Field(default=None, ge=0)
+    target_stock: Decimal | None = Field(default=None, ge=0)
+    lead_time_days: Decimal | None = Field(default=None, ge=0)
     notes: str | None = None
     is_active: bool | None = None
 
@@ -59,6 +63,8 @@ class ProductRead(CatalogBase):
     unit: UnitRead
     minimum_stock: Decimal | None
     safety_stock: Decimal | None
+    target_stock: Decimal | None
+    lead_time_days: Decimal | None
     notes: str | None
     is_active: bool
 

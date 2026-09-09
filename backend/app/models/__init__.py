@@ -10,6 +10,7 @@ from app.models.inventory import (
     ProductionIssueItem,
     Return,
     ReturnItem,
+    StockAdjustment,
 )
 from app.models.purchasing import Payment, PaymentAllocation, Purchase, PurchaseItem, SupplierLedger
 
@@ -29,6 +30,7 @@ __all__ = [
     "Setting",
     "Supplier",
     "SupplierLedger",
+    "StockAdjustment",
     "Unit",
     "User",
     "UserRole",

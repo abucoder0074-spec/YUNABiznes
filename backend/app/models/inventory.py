@@ -72,6 +72,46 @@ class InventoryTransaction(UUIDPrimaryKeyMixin, Base):
     performed_by: Mapped[User | None] = relationship(back_populates="inventory_transactions")
 
 
+class StockAdjustment(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """A counted stock document whose posting creates one immutable movement."""
+
+    __tablename__ = "stock_adjustments"
+    __table_args__ = (
+        CheckConstraint("counted_quantity >= 0", name="ck_stock_adjustments_counted_nonnegative"),
+        CheckConstraint("length(trim(reason)) > 0", name="ck_stock_adjustments_reason_required"),
+        Index("ix_stock_adjustments_warehouse_product", "warehouse_id", "product_id"),
+    )
+
+    number: Mapped[str] = mapped_column(String(80), unique=True)
+    warehouse_id: Mapped[UUID] = mapped_column(
+        ForeignKey("warehouses.id", ondelete="RESTRICT"), index=True
+    )
+    product_id: Mapped[UUID] = mapped_column(
+        ForeignKey("products.id", ondelete="RESTRICT"), index=True
+    )
+    unit_id: Mapped[UUID] = mapped_column(ForeignKey("units.id", ondelete="RESTRICT"))
+    counted_quantity: Mapped[Decimal] = mapped_column(QUANTITY)
+    system_quantity: Mapped[Decimal | None] = mapped_column(QUANTITY)
+    difference_quantity: Mapped[Decimal | None] = mapped_column(QUANTITY)
+    reason: Mapped[str] = mapped_column(Text)
+    notes: Mapped[str | None] = mapped_column(Text)
+    counted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), index=True
+    )
+    status: Mapped[DocumentStatus] = mapped_column(
+        Enum(DocumentStatus, native_enum=False, create_constraint=True),
+        default=DocumentStatus.DRAFT,
+        server_default=DocumentStatus.DRAFT.value,
+    )
+    posted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_by_user_id: Mapped[UUID | None] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+
+    warehouse: Mapped[Warehouse] = relationship()
+    product: Mapped[Product] = relationship()
+    unit: Mapped[Unit] = relationship()
+    created_by: Mapped[User | None] = relationship()
+
+
 class ProductionIssue(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "production_issues"
     __table_args__ = (Index("ix_production_issues_warehouse_date", "warehouse_id", "issued_at"),)
