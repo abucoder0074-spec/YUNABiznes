@@ -98,6 +98,10 @@ class ProductionIssue(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         back_populates="production_issue", cascade="all, delete-orphan"
     )
 
+    @property
+    def item_count(self) -> int:
+        return len(self.items)
+
 
 class ProductionIssueItem(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "production_issue_items"
@@ -149,6 +153,10 @@ class Return(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     authorized_by: Mapped[User | None] = relationship(back_populates="returns_authorized")
     items: Mapped[list[ReturnItem]] = relationship(back_populates="return_document", cascade="all, delete-orphan")
     ledger_entries: Mapped[list[SupplierLedger]] = relationship(back_populates="return_document")
+
+    @property
+    def total_amount(self) -> Decimal:
+        return sum((item.total or Decimal("0") for item in self.items), Decimal("0"))
 
 
 class ReturnItem(UUIDPrimaryKeyMixin, TimestampMixin, Base):

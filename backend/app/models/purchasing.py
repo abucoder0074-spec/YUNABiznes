@@ -141,6 +141,7 @@ class Payment(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         default=DocumentStatus.DRAFT,
         server_default=DocumentStatus.DRAFT.value,
     )
+    posted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     reference_number: Mapped[str | None] = mapped_column(String(120))
     notes: Mapped[str | None] = mapped_column(Text)
     created_by_user_id: Mapped[UUID | None] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
