@@ -251,8 +251,10 @@ async def post_supplier_return(session: AsyncSession, *, return_id: UUID) -> Ret
     requested_returns: dict[UUID, Decimal] = defaultdict(lambda: Decimal("0"))
     for item in items:
         if item.purchase_item_id is None:
-            continue
+            raise SupplierReturnError("Every return item must reference its original purchase item.")
         purchase_item, purchase = sources[item.purchase_item_id]
+        if item.unit_price != purchase_item.unit_price:
+            raise SupplierReturnError("A return item must be credited at its original purchase price.")
         if purchase.status is not DocumentStatus.POSTED:
             raise SupplierReturnError("Supplier returns must reference posted purchases.")
         if purchase.supplier_id != return_document.supplier_id:

@@ -71,17 +71,9 @@ class Purchase(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
         return sum(((item.total or Decimal("0")) for item in self.items), Decimal("0"))
 
-    @property
-    def paid_amount(self) -> Decimal:
-        """Calculate direct allocations; unallocated supplier credits remain general balance."""
-
-        return sum((allocation.amount for allocation in self.allocations), Decimal("0"))
-
-    @property
-    def outstanding_amount(self) -> Decimal:
-        """Return the remaining debt for this purchase, never below zero."""
-
-        return max(self.total_amount - self.paid_amount, Decimal("0"))
+    # Paid/outstanding amounts are deliberately not ORM properties: they must ignore draft/void
+    # payments and subtract posted returns, and lazy-loading collections fails in async sessions.
+    # Use app.repositories.purchasing.purchase_financials() instead.
 
 
 class PurchaseItem(UUIDPrimaryKeyMixin, TimestampMixin, Base):

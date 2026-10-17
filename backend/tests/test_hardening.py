@@ -105,8 +105,8 @@ async def test_cross_supplier_allocation_rejected(db_session: AsyncSession) -> N
             await post_payment(db_session, payment_id=payment.id)
 
 
-async def test_posted_purchase_is_mutable_demonstrates_risk(db_session: AsyncSession) -> None:
-    """Demonstrate that posted documents are currently mutable (risk)."""
+async def test_posted_purchase_is_immutable(db_session: AsyncSession) -> None:
+    """Posted documents cannot be edited; only POSTED -> VOID is allowed."""
     unit, product, warehouse = await create_catalog(db_session)
     supplier = Supplier(name="Smut")
     db_session.add(supplier)
@@ -118,12 +118,10 @@ async def test_posted_purchase_is_mutable_demonstrates_risk(db_session: AsyncSes
     await db_session.flush()
     await post_purchase(db_session, purchase_id=purchase.id)
 
-    # Attempt to modify a posted purchase; currently the DB/model allows it (no DB trigger)
     new_supplier = Supplier(name="Other")
     db_session.add(new_supplier)
     await db_session.flush()
     purchase.supplier_id = new_supplier.id
-    await db_session.flush()
-
-    await db_session.refresh(purchase)
-    assert purchase.supplier_id == new_supplier.id
+    with pytest.raises(ValueError, match="immutable"):
+        await db_session.flush()
+    db_session.expire(purchase)

@@ -39,7 +39,7 @@ class InventoryTransaction(UUIDPrimaryKeyMixin, Base):
         CheckConstraint("quantity > 0", name="ck_inventory_transactions_quantity_positive"),
         CheckConstraint(
             "transaction_type NOT IN ('ADJUSTMENT_IN', 'ADJUSTMENT_OUT') "
-            "OR length(trim(reason)) > 0",
+            "OR (reason IS NOT NULL AND length(trim(reason)) > 0)",
             name="ck_inventory_adjustments_require_reason",
         ),
         Index("ix_inventory_balance_lookup", "warehouse_id", "product_id", "occurred_at"),
